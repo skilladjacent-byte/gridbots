@@ -137,3 +137,87 @@ body {
   margin-top: 12px; font-size: 12px; color: #88b8a0; line-height: 1.6;
   max-height: 120px; overflow-y: auto; border-top: 1px solid #143a26; padding-top: 8px;
 }
+
+/* ============================================================
+   App shell + tabs
+   ============================================================ */
+.app { width: 100%; max-width: 680px; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #143a26;
+}
+.brand { color: var(--green); font-size: 18px; letter-spacing: 3px; font-weight: 700; }
+.tabs { display: flex; gap: 6px; }
+.tab {
+  padding: 8px 16px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; color: #88b8a0; font-family: inherit; font-size: 13px; cursor: pointer;
+}
+.tab:hover { background: #0a2615; }
+.tab.active { background: #0a2615; border-color: #2f9e6f; color: var(--green); }
+.view { width: 100%; }
+
+/* ============================================================
+   Customize screen
+   ============================================================ */
+.cz { display: grid; grid-template-columns: 1fr 280px; gap: 14px; align-items: start; }
+@media (max-width: 640px) { .cz { grid-template-columns: 1fr; } }
+
+.cz-head { color: var(--green-soft); font-size: 15px; letter-spacing: 1px; margin-bottom: 12px; }
+.panel { background: var(--panel); border: 1px solid #143a26; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+.panel-title {
+  color: #88b8a0; font-size: 12px; letter-spacing: 1px; margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.slot-card { background: #04140a; border: 1px solid #143a26; border-radius: 8px; padding: 8px; }
+.slot-label { color: var(--green-soft); font-size: 11px; letter-spacing: 0.5px; margin-bottom: 6px; }
+.slot-card select {
+  width: 100%; background: var(--panel); color: #cdeedd; border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px; font-family: inherit; font-size: 12px;
+}
+.slot-desc { color: #6a8a78; font-size: 10px; margin-top: 5px; min-height: 13px; }
+
+.ram-readout { color: var(--green-soft); font-size: 11px; }
+.ram-readout.over { color: #ff5a5a; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip {
+  background: #04140a; border: 1px solid; border-radius: 8px; padding: 6px 8px;
+  cursor: pointer; font-family: inherit; font-size: 11px; display: flex; flex-direction: column; gap: 2px;
+  color: #cdeedd;
+}
+.chip:hover { background: #0a2615; }
+.chip.on { background: #0a2615; box-shadow: 0 0 0 1px #2f9e6f inset; }
+.chip-meta { color: #6a8a78; font-size: 9px; }
+
+.lo-label { color: #6a8a78; font-size: 11px; margin: 4px 0; }
+.loadout-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+.lo-pill { background: #04140a; border: 1px solid #143a26; border-radius: 6px; padding: 4px 8px; font-size: 11px; }
+.lo-x { cursor: pointer; color: #ff7a4d; margin-left: 4px; }
+.lo-empty { color: #4a6a58; font-size: 11px; }
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.stat-card { background: #04140a; border-radius: 8px; padding: 8px; text-align: center; }
+.stat-k { color: #6a8a78; font-size: 10px; letter-spacing: 1px; }
+.stat-v { color: var(--green); font-size: 22px; font-weight: 700; }
+
+.res-title { color: #6a8a78; font-size: 11px; margin-bottom: 6px; }
+.res-list { display: flex; flex-direction: column; gap: 3px; }
+.res-row { display: flex; justify-content: space-between; font-size: 11px; }
+.res-name { color: #9fbfaf; }
+.res-val.pos { color: var(--green); }
+.res-val.neg { color: #ff7a4d; }
+.res-val.zero { color: #4a6a58; }
+
+.ability-list { display: flex; flex-direction: column; gap: 8px; }
+.ability { background: #04140a; border-radius: 6px; padding: 8px; font-size: 11px; }
+.ability b { color: var(--green-soft); display: block; margin-bottom: 2px; }
+.ability span { color: #6a8a78; }
+.ability.none { color: #4a6a58; }
+
+.ready-note { font-size: 11px; color: #ff9a6e; margin-bottom: 8px; text-align: center; }
+.ready-note.ok { color: var(--green); }
+.primary.big { width: 100%; padding: 12px; background: var(--panel); border: 1px solid #2f9e6f;
+  border-radius: 8px; color: var(--green); font-family: inherit; font-size: 14px; cursor: pointer; }
+.primary.big:hover:not(:disabled) { background: #0a2615; }
+.primary.big:disabled { opacity: 0.4; cursor: not-allowed; }

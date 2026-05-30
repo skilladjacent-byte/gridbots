@@ -6,8 +6,8 @@
 // ============================================================
 
 import type { Program, Combatant, BotStatus } from "../core/types";
-import { PROGRAMS, PROGRAM_ORDER, shortName } from "../data/programs";
-import { BattleScene, type BattleCallbacks } from "../scenes/battleScene";
+import { PROGRAMS, shortName } from "../data/programs";
+import { BattleScene, type BattleCallbacks, type BattleSetup } from "../scenes/battleScene";
 import { COMBAT_CONFIG } from "../core/config";
 
 const TYPE_COLOR: Record<string, string> = {
@@ -23,11 +23,14 @@ export class CombatUI {
   private queue: Program[] = [];
   private scene!: BattleScene;
   private ready = true;
+  /** The program ids the player equipped in customization — the only ones playable. */
+  private palettePrograms: string[];
 
-  constructor(private root: HTMLElement) {
+  constructor(private root: HTMLElement, private setup: BattleSetup) {
+    this.palettePrograms = setup.player.programLoadout.slice();
     this.render();
     const canvas = this.root.querySelector<HTMLCanvasElement>("#grid")!;
-    this.scene = new BattleScene(canvas, this.makeCallbacks());
+    this.scene = new BattleScene(canvas, this.makeCallbacks(), setup);
     this.bindControls();
     this.renderQueue();
     this.renderPalette();
@@ -104,8 +107,9 @@ export class CombatUI {
   private renderPalette() {
     const pal = this.$("#palette");
     pal.innerHTML = "";
-    for (const key of PROGRAM_ORDER) {
+    for (const key of this.palettePrograms) {
       const p = PROGRAMS[key];
+      if (!p) continue;
       const b = document.createElement("button");
       b.className = "prog";
       b.style.borderColor = p.color + "55";

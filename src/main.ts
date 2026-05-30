@@ -1,14 +1,12 @@
 // ============================================================
 // GridBots — Entry Point
-// Boots the combat sandbox into the #app container.
-// As later scenes (Command Grid hub, customization) are added,
-// this becomes a simple scene router.
+// Boots the App shell (Customize/Battle tabs) into #app.
 // ============================================================
 
-import { CombatUI } from "./ui/combatUI";
+import { App } from "./app";
 import "./style.css";
 
-const app = document.getElementById("app");
-if (!app) throw new Error("#app container not found");
+const root = document.getElementById("app");
+if (!root) throw new Error("#app container not found");
 
-new CombatUI(app);
+new App(root);

@@ -6,11 +6,11 @@
 // ============================================================
 
 import type { Program, Combatant, BotStatus } from "../core/types";
-import { zeroResistances } from "../core/types";
 import { COMBAT_CONFIG, createRNG, type RNG } from "../core/config";
 import { resolveSlot, freshStatus, type BattleEvent, type SlotInput } from "../core/combat";
 import { PROGRAMS, makeSuper, shortName } from "../data/programs";
-import { PLAYER_BOT, ENEMY_BOT, randomAI, type BotAI } from "../data/bots";
+import { randomAI, combatantFromBot, type BotAI, type BuildKind } from "../data/bots";
+import type { AssembledBot } from "../core/assembly";
 import { BotRig } from "../render/botRig";
 import { drawGridFloor } from "../render/gridFloor";
 
@@ -28,11 +28,17 @@ export interface BattleCallbacks {
   onReadyForInput(ready: boolean): void;
 }
 
+/** The two assembled bots a battle is fought between. */
+export interface BattleSetup {
+  player: AssembledBot;
+  enemy: AssembledBot;
+}
+
 export class BattleScene {
   private ctx: CanvasRenderingContext2D;
   private rng: RNG = createRNG();
   private cfg = COMBAT_CONFIG;
-  private ai: BotAI = randomAI();
+  private ai: BotAI;
 
   private pRig: BotRig;
   private eRig: BotRig;
@@ -45,12 +51,13 @@ export class BattleScene {
 
   private last = 0;
 
-  constructor(private canvas: HTMLCanvasElement, private cb: BattleCallbacks) {
+  constructor(private canvas: HTMLCanvasElement, private cb: BattleCallbacks, private setup: BattleSetup) {
     this.ctx = canvas.getContext("2d")!;
-    this.pRig = new BotRig(150, 1, PLAYER_BOT.color, PLAYER_BOT.build);
-    this.eRig = new BotRig(530, -1, ENEMY_BOT.color, ENEMY_BOT.build);
-    this.p = neutralCombatant("p", this.cfg.startDP);
-    this.e = neutralCombatant("e", this.cfg.startDP);
+    this.pRig = new BotRig(150, 1, setup.player.color, buildOf(setup.player));
+    this.eRig = new BotRig(530, -1, setup.enemy.color, buildOf(setup.enemy));
+    this.p = combatantFromBot("p", setup.player);
+    this.e = combatantFromBot("e", setup.enemy);
+    this.ai = randomAI(setup.enemy.programLoadout);
     requestAnimationFrame(this.loop);
   }
 
@@ -202,8 +209,8 @@ export class BattleScene {
   }
 
   reset() {
-    this.p = neutralCombatant("p", this.cfg.startDP);
-    this.e = neutralCombatant("e", this.cfg.startDP);
+    this.p = combatantFromBot("p", this.setup.player);
+    this.e = combatantFromBot("e", this.setup.enemy);
     this.round = 1;
     this.over = false;
     this.busy = false;
@@ -220,17 +227,12 @@ export class BattleScene {
 }
 
 /**
- * Builds a combatant with no resistances/abilities — the current sandbox
- * default. Phase 3b will replace this with combatants derived from the
- * player's assembled bot (via computeStats) and a chosen enemy build.
+ * Picks the rig silhouette for an assembled bot. For now derived from the
+ * chassis (Vanguard = tank-ish, others = agile). Phase 3c will make the rig
+ * draw actual per-part shapes; this is a placeholder mapping.
  */
-function neutralCombatant(side: "p" | "e", dp: number): Combatant {
-  return {
-    side, dp, maxDp: dp, combo: 0,
-    resistances: zeroResistances(),
-    abilities: { packetShield: false, hyperthreaded: false, ghostProtocol: false },
-    packetShieldUsed: false,
-  };
+function buildOf(bot: AssembledBot): BuildKind {
+  return bot.chassis.id === "vanguard" ? "agile" : "tank";
 }
 
 function disabledProgram(): Program {
