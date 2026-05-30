@@ -52,6 +52,21 @@ export interface Program {
 
 export type PartSlot = "head" | "leftArm" | "rightArm" | "legs";
 
+/** Design families (Art Bible v3.0). A family fixes a part's APPEARANCE
+ *  (silhouette/shape language); stats are rolled separately, Diablo-style.
+ *  Naming is Family + Subtitle, e.g. "Beetle Railgun". */
+export type Family = "beetle" | "knight" | "mantis" | "lion" | "demon" | "falcon";
+
+/** The four recolorable paint channels exposed to the player, plus the
+ *  fixed (non-recolorable) frame. Per Art Bible v3.0 color region system. */
+export interface PartPalette {
+  primary: string;   // 60-70% main armor masses
+  secondary: string; // 15-25% accents/trim/crests
+  energy: string;    // small glowing areas (cores/vents)
+  eyes: string;      // expression channel (digital, recolorable)
+  // frame is intentionally NOT here: it is always gunmetal, set in art code.
+}
+
 /** Passive ability granted by a chassis or part. Effects keyed by id. */
 export interface Ability {
   id: string;
@@ -73,6 +88,10 @@ export interface Part {
   id: string;
   name: string;
   slot: PartSlot;
+  /** Appearance family (Art Bible v3.0). Drives which art is drawn. */
+  family: Family;
+  /** Slot-role subtitle; display name is `Family + Subtitle`, e.g. "Beetle Railgun". */
+  subtitle: string;
   dp: number;                 // DP contribution
   resistances: Resistances;   // can be +/-
   ability?: Ability;
@@ -80,6 +99,7 @@ export interface Part {
   ram?: number;
   /** Program ids this part unlocks while equipped. */
   exclusivePrograms?: string[];
+  /** Legacy single-color hint (used as a default primary if no palette set). */
   color: string;
   desc: string;
 }
@@ -90,6 +110,28 @@ export interface Loadout {
   leftArm: Part | null;
   rightArm: Part | null;
   legs: Part | null;
+}
+
+/** Per-part paint: the two recolorable armor channels for one part. */
+export interface PartPaint {
+  primary: string;
+  secondary: string;
+}
+
+/** A bot's full paint job (Art Bible v3.0).
+ *  Primary/secondary are PER-PART (each piece paintable independently).
+ *  Energy + eyes are PER-BOT (shared "life signs" / personality).
+ *  Frame is never stored: always fixed gunmetal in the art code. */
+export interface BotPaint {
+  parts: {
+    head: PartPaint;
+    leftArm: PartPaint;
+    rightArm: PartPaint;
+    legs: PartPaint;
+    chassis: PartPaint;
+  };
+  energy: string;
+  eyes: string;
 }
 
 /** Rolled-up stats computed from chassis + equipped parts. */

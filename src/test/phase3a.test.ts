@@ -26,10 +26,10 @@ const bot: AssembledBot = {
   name: "Test Unit",
   chassis: CHASSIS.vanguard,
   loadout: {
-    head: PARTS.cpuFortified,
-    rightArm: PARTS.armRailgun,
-    leftArm: PARTS.armShield,
-    legs: PARTS.legsStandard,
+    head: PARTS.knightHead,
+    rightArm: PARTS.beetleRailgun,
+    leftArm: PARTS.knightShield,
+    legs: PARTS.knightLegs,
   },
   programLoadout: [],
   color: "#3cff85",
@@ -54,7 +54,7 @@ check("Railgun arm unlocks Railburst (exclusive)", stats.availableProgramIds.inc
 console.log("\n=== Exclusive program gating ===\n");
 
 // Swap railgun arm for blaster arm → lose 'rail', gain Hyperthreaded
-const bot2: AssembledBot = { ...bot, loadout: { ...bot.loadout, rightArm: PARTS.armBlaster } };
+const bot2: AssembledBot = { ...bot, loadout: { ...bot.loadout, rightArm: PARTS.knightBlaster } };
 const stats2 = computeStats(bot2, UNIVERSAL_PROGRAM_IDS);
 check("Unequipping Railgun removes Railburst access", !stats2.availableProgramIds.includes("rail"));
 check("Blaster arm grants Hyperthreaded", stats2.abilities.some(a => a.id === "hyperthreaded"));

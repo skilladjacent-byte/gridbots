@@ -6,7 +6,7 @@
 // ============================================================
 
 import type {
-  Chassis, Part, Loadout, ComputedStats, Resistances, Ability, PartSlot,
+  Chassis, Part, Loadout, ComputedStats, Resistances, Ability, PartSlot, BotPaint, PartPaint,
 } from "./types";
 import { zeroResistances, DAMAGE_TYPES } from "./types";
 
@@ -17,6 +17,9 @@ export interface AssembledBot {
   /** Loadout of program ids the player has slotted for battle (Phase 3b). */
   programLoadout: string[];
   color: string;
+  /** Per-part + per-bot paint (Art Bible v3.0). Optional for back-compat;
+   *  defaultPaintFor() fills it in when absent. */
+  paint?: BotPaint;
 }
 
 export const PART_SLOTS: PartSlot[] = ["head", "leftArm", "rightArm", "legs"];
@@ -75,3 +78,43 @@ function emptyLoadout(): Loadout {
 }
 
 export { emptyLoadout, zeroResistances };
+
+// ------------------------------------------------------------
+// Paint defaults (Art Bible v3.0)
+// ------------------------------------------------------------
+
+function darken(hex: string, amt: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const f = (c: number) => Math.max(0, Math.min(255, Math.round(c - amt * 255)));
+  return "#" + ((f((n >> 16) & 255) << 16) | (f((n >> 8) & 255) << 8) | f(n & 255)).toString(16).padStart(6, "0");
+}
+
+function paintFromPart(part: Part | null, fallback: string): PartPaint {
+  const primary = part?.color ?? fallback;
+  return { primary, secondary: darken(primary, 0.22) };
+}
+
+/** Build a sensible default paint job from a bot's equipped parts.
+ *  Per-part primary = the part's family color; secondary = a darker tone.
+ *  Energy/eyes default to the bot's signature color family. */
+export function defaultPaintFor(bot: AssembledBot): BotPaint {
+  const sig = bot.color || "#5fe39b";
+  return {
+    parts: {
+      head: paintFromPart(bot.loadout.head, sig),
+      leftArm: paintFromPart(bot.loadout.leftArm, sig),
+      rightArm: paintFromPart(bot.loadout.rightArm, sig),
+      legs: paintFromPart(bot.loadout.legs, sig),
+      chassis: { primary: sig, secondary: darken(sig, 0.22) },
+    },
+    energy: "#5fffc8",
+    eyes: "#eafff2",
+  };
+}
+
+/** Always-present paint: returns bot.paint or a freshly derived default. */
+export function paintOf(bot: AssembledBot): BotPaint {
+  return bot.paint ?? defaultPaintFor(bot);
+}

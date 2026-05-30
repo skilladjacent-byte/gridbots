@@ -7,6 +7,15 @@
 // ============================================================
 
 import type { BuildKind } from "../data/bots";
+import type { BotPaint, PartPaint, PartSlot, PartPalette, Family } from "../core/types";
+import { drawPart, drawChassis } from "./partArt";
+
+/** Which part ids + paint this rig should render (from the AssembledBot). */
+export interface RigSkin {
+  partIds: { head?: string; leftArm?: string; rightArm?: string; legs?: string };
+  chassisFamily: Family;
+  paint: BotPaint;
+}
 
 export type AnimName =
   | "idle"
@@ -42,6 +51,10 @@ export class BotRig {
   animT = 0;
   animDur = 0;
 
+  /** Optional skin: part ids + paint to render via the art registry.
+   *  When absent, the rig falls back to its legacy single-color shapes. */
+  skin?: RigSkin;
+
   shield = 0;
   shieldFlash = 0;
   vanish = 0;
@@ -52,12 +65,20 @@ export class BotRig {
   armR = 0;
   projectiles: Projectile[] = [];
 
-  constructor(baseX: number, dir: number, color: string, build: BuildKind) {
+  constructor(baseX: number, dir: number, color: string, build: BuildKind, skin?: RigSkin) {
     this.x = baseX;
     this.baseX = baseX;
     this.dir = dir;
     this.color = color;
     this.build = build;
+    this.skin = skin;
+  }
+
+  /** Compose a part's PartPalette from per-part primary/secondary + bot energy/eyes. */
+  private paletteFor(slot: PartSlot | "chassis"): PartPalette {
+    const paint = this.skin!.paint;
+    const pp: PartPaint = paint.parts[slot];
+    return { primary: pp.primary, secondary: pp.secondary, energy: paint.energy, eyes: paint.eyes };
   }
 
   setAnim(name: AnimName, dur: number) {
@@ -164,30 +185,57 @@ export class BotRig {
       ctx.globalAlpha = alpha;
     }
 
-    const lineCol = hf > 0 ? "#ff2a2a" : this.color;
-    ctx.strokeStyle = lineCol; ctx.lineWidth = tank ? 3 : 2.5;
-    ctx.fillStyle = hf > 0 ? "rgba(255,40,40,0.30)" : this.color + "18";
-    if (hf > 0) { ctx.shadowColor = "#ff2a2a"; ctx.shadowBlur = 20 * hf; }
-    rr(ctx, -torsoW / 2, -10, torsoW, torsoH, 8); ctx.fill(); ctx.stroke();
-    rr(ctx, -headW / 2, -10 - headH, headW, headH, 7); ctx.fill(); ctx.stroke();
-    ctx.shadowBlur = 0;
+    if (this.skin) {
+      // ---- Registry path: family parts + composed 4-region palettes ----
+      const scale = tank ? 1.15 : 1;
+      const build: "agile" | "tank" = tank ? "tank" : "agile";
+      // legs (behind), drawn at the bot's lower body
+      drawPart("legs", this.skin.partIds.legs, {
+        ctx, x: 0, y: 44, dir, pal: this.paletteFor("legs"), hitFlash: hf, scale, t,
+      });
+      // chassis/torso
+      const tor = drawChassis({
+        ctx, x: 0, y: 0, dir, pal: this.paletteFor("chassis"), hitFlash: hf, scale, t,
+      }, build, this.skin.chassisFamily);
+      // head above torso
+      drawPart("head", this.skin.partIds.head, {
+        ctx, x: 0, y: -10, dir, pal: this.paletteFor("head"), hitFlash: hf, scale, t,
+      });
+      // arms at torso sides, extension driven by animation state
+      const ax = tor.w / 2;
+      drawPart("leftArm", this.skin.partIds.leftArm, {
+        ctx, x: -ax * dir, y: 8, dir: -dir, pal: this.paletteFor("leftArm"), hitFlash: hf, scale, ext: this.armL, t,
+      });
+      drawPart("rightArm", this.skin.partIds.rightArm, {
+        ctx, x: ax * dir, y: 8, dir, pal: this.paletteFor("rightArm"), hitFlash: hf, scale, ext: this.armR, t,
+      });
+    } else {
+      // ---- Legacy path: single-color procedural shapes ----
+      const lineCol = hf > 0 ? "#ff2a2a" : this.color;
+      ctx.strokeStyle = lineCol; ctx.lineWidth = tank ? 3 : 2.5;
+      ctx.fillStyle = hf > 0 ? "rgba(255,40,40,0.30)" : this.color + "18";
+      if (hf > 0) { ctx.shadowColor = "#ff2a2a"; ctx.shadowBlur = 20 * hf; }
+      rr(ctx, -torsoW / 2, -10, torsoW, torsoH, 8); ctx.fill(); ctx.stroke();
+      rr(ctx, -headW / 2, -10 - headH, headW, headH, 7); ctx.fill(); ctx.stroke();
+      ctx.shadowBlur = 0;
 
-    // eyes
-    ctx.fillStyle = hf > 0 ? "#ff5a5a" : this.color;
-    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
-    const eyeY = -10 - headH / 2;
-    ctx.beginPath(); ctx.arc(-8 * dir, eyeY, 4, 0, 7); ctx.fill();
-    ctx.beginPath(); ctx.arc(7 * dir, eyeY, 4, 0, 7); ctx.fill();
-    ctx.shadowBlur = 0;
+      // eyes
+      ctx.fillStyle = hf > 0 ? "#ff5a5a" : this.color;
+      ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
+      const eyeY = -10 - headH / 2;
+      ctx.beginPath(); ctx.arc(-8 * dir, eyeY, 4, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(7 * dir, eyeY, 4, 0, 7); ctx.fill();
+      ctx.shadowBlur = 0;
 
-    // arms
-    this.drawArm(ctx, "L", torsoW, tank, hf);
-    this.drawArm(ctx, "R", torsoW, tank, hf);
+      // arms
+      this.drawArm(ctx, "L", torsoW, tank, hf);
+      this.drawArm(ctx, "R", torsoW, tank, hf);
 
-    // legs
-    ctx.strokeStyle = hf > 0 ? "#ff2a2a" : this.color; ctx.lineWidth = tank ? 9 : 7;
-    ctx.beginPath(); ctx.moveTo(-12, 44); ctx.lineTo(-14, 62); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(12, 44); ctx.lineTo(14, 62); ctx.stroke();
+      // legs
+      ctx.strokeStyle = hf > 0 ? "#ff2a2a" : this.color; ctx.lineWidth = tank ? 9 : 7;
+      ctx.beginPath(); ctx.moveTo(-12, 44); ctx.lineTo(-14, 62); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(12, 44); ctx.lineTo(14, 62); ctx.stroke();
+    }
 
     // shield
     if (this.shield > 0.03 || this.shieldFlash > 0.03) {

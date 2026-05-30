@@ -10,8 +10,8 @@ import { COMBAT_CONFIG, createRNG, type RNG } from "../core/config";
 import { resolveSlot, freshStatus, type BattleEvent, type SlotInput } from "../core/combat";
 import { PROGRAMS, makeSuper, shortName } from "../data/programs";
 import { randomAI, combatantFromBot, type BotAI, type BuildKind } from "../data/bots";
-import type { AssembledBot } from "../core/assembly";
-import { BotRig } from "../render/botRig";
+import { paintOf, type AssembledBot } from "../core/assembly";
+import { BotRig, type RigSkin } from "../render/botRig";
 import { drawGridFloor } from "../render/gridFloor";
 
 const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
@@ -53,8 +53,8 @@ export class BattleScene {
 
   constructor(private canvas: HTMLCanvasElement, private cb: BattleCallbacks, private setup: BattleSetup) {
     this.ctx = canvas.getContext("2d")!;
-    this.pRig = new BotRig(150, 1, setup.player.color, buildOf(setup.player));
-    this.eRig = new BotRig(530, -1, setup.enemy.color, buildOf(setup.enemy));
+    this.pRig = new BotRig(150, 1, setup.player.color, buildOf(setup.player), skinOf(setup.player));
+    this.eRig = new BotRig(530, -1, setup.enemy.color, buildOf(setup.enemy), skinOf(setup.enemy));
     this.p = combatantFromBot("p", setup.player);
     this.e = combatantFromBot("e", setup.enemy);
     this.ai = randomAI(setup.enemy.programLoadout);
@@ -233,6 +233,21 @@ export class BattleScene {
  */
 function buildOf(bot: AssembledBot): BuildKind {
   return bot.chassis.id === "vanguard" ? "agile" : "tank";
+}
+
+/** Build the rig skin (part ids + family + paint) from an assembled bot. */
+function skinOf(bot: AssembledBot): RigSkin {
+  const headFam = bot.loadout.head?.family ?? "beetle";
+  return {
+    partIds: {
+      head: bot.loadout.head?.id,
+      leftArm: bot.loadout.leftArm?.id,
+      rightArm: bot.loadout.rightArm?.id,
+      legs: bot.loadout.legs?.id,
+    },
+    chassisFamily: headFam, // chassis not yet a slot; follow the head's family for now
+    paint: paintOf(bot),
+  };
 }
 
 function disabledProgram(): Program {

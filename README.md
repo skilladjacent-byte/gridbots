@@ -69,7 +69,8 @@ src/
 - Light RNG only in: evade success, crit (~12%), damage variance (±10%).
 
 ## Next (not yet built)
+- Phase 3c: make the rig visually change per equipped part (right now the
+  silhouette is derived from the chassis; parts change stats but not yet looks)
 - Phase 1.5: smarter AI (the interface in `data/bots.ts` is ready for it)
-- Phase 3: equipment/parts + customization (Head=RAM/DP/Res/Ability, others=3 stats)
-- Phase 4: loot with randomized stat rolls
+- Phase 4: loot with randomized stat rolls feeding the part inventory
 ```
